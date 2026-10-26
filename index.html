@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>응답하라 1946: 올인원 역사 수업</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&family=Noto+Serif+KR:wght@600;900&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Noto Sans KR', sans-serif; background-color: #111827; color: #f9fafb; overflow-x: hidden; -webkit-tap-highlight-color: transparent; }
+        
+        /* 🔥 Tiiny Host 보라색 광고 배너 강제 삭제 코드 🔥 */
+        div[style*="z-index: 99999"], a[href*="tiiny.host"], .tiiny-branding, div[style*="position: fixed"][style*="bottom"] { 
+            display: none !important; 
+            opacity: 0 !important; 
+            visibility: hidden !important; 
+            pointer-events: none !important;
+        }
+
+        .serif { font-family: 'Noto Serif KR', serif; }
+        .neon-box { box-shadow: 0 0 20px rgba(56, 189, 248, 0.2); border: 1px solid rgba(56, 189, 248, 0.5); }
+        .btn-press { transition: all 0.1s; }
+        .btn-press:active { transform: scale(0.95); }
+        .toast { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); background: #10b981; color: white; padding: 16px 32px; border-radius: 999px; font-weight: 900; font-size: 1.1rem; transition: top 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55); z-index: 9999; box-shadow: 0 10px 25px rgba(16, 185, 129, 0.5); }
+        .toast.show { top: 40px; }
+        .screen { display: none; }
+        .screen.active { display: flex; }
+        
+        .newspaper-style { background-color: #f4ebd0; color: #2c2c2c; border: 8px double #2c2c2c; background-image: url('data:image/svg+xml;utf8,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><filter id="noise"><feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="4" stitchTiles="stitch"/></filter><rect width="100" height="100" filter="url(%23noise)" opacity="0.05"/></svg>'); }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-5px); } 40%, 80% { transform: translateX(5px); } }
+        .shake-screen { animation: shake 0.4s; }
+    </style>
+</head>
+<body id="main-body" class="min-h-screen flex flex-col items-center justify-center relative">
+
+    <div class="fixed top-5 right-5 z-[9999] flex items-center gap-3 bg-gray-900/90 backdrop-blur-md px-5 py-2.5 rounded-2xl border border-gray-600 shadow-2xl pointer-events-none">
+        <svg class="w-7 h-7 text-sky-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 14l9-5-9-5-9 5 9 5z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"></path></svg>
+        <span class="text-white font-black tracking-widest text-lg">아산고등학교</span>
+    </div>
+
+    <div id="alert-overlay" class="fixed inset-0 bg-red-600/90 z-[9999] hidden flex-col items-center justify-center">
+        <h1 class="text-7xl md:text-9xl font-black text-white animate-pulse tracking-tighter">역사의 갈림길</h1>
+        <p class="text-3xl text-yellow-300 font-bold mt-4">당신의 선택이 시대를 결정합니다!</p>
+    </div>
+
+    <div id="toast" class="toast">메시지</div>
+
+    <!-- 1. 시작 화면 -->
+    <div id="intro-screen" class="screen active flex-col items-center justify-center w-full max-w-md h-full my-auto p-4">
+        <h1 class="text-5xl md:text-6xl font-black mb-2 text-center text-white tracking-tight">응답하라 <span class="text-sky-400">1946</span></h1>
+        <p class="text-gray-400 font-bold mb-8 text-center text-lg">올인원 역사 수업 시스템<br><span class="inline-block mt-2 px-4 py-1 bg-sky-900/50 text-sky-300 rounded-full text-sm border border-sky-700/50">🏫 아산고 1학년 1반</span></p>
+
+        <div class="w-full bg-gray-800 p-8 rounded-3xl neon-box flex flex-col gap-6">
+            <button onclick="app.createRoom()" class="btn-press w-full py-5 bg-sky-600 hover:bg-sky-500 rounded-2xl text-xl font-black text-white shadow-lg shadow-sky-900">👨‍🏫 교사용 화면 열기</button>
+            <div class="flex items-center my-1"><div class="flex-grow border-t border-gray-600"></div><span class="px-4 text-gray-400 font-bold text-sm">학생 입장</span><div class="flex-grow border-t border-gray-600"></div></div>
+            <div class="flex flex-col gap-3">
+                <input type="text" id="input-room-code" placeholder="입장 코드 4자리" class="w-full px-4 py-3 rounded-xl text-center text-gray-900 font-bold text-lg bg-gray-100 focus:outline-none focus:ring-4 focus:ring-sky-400">
+                <div class="flex gap-2">
+                    <input type="text" id="student-id" placeholder="학번" class="w-1/3 px-4 py-3 rounded-xl text-center text-gray-900 font-bold text-lg bg-gray-100 focus:outline-none focus:ring-4 focus:ring-sky-400">
+                    <input type="text" id="student-name" placeholder="이름" class="w-2/3 px-4 py-3 rounded-xl text-center text-gray-900 font-bold text-lg bg-gray-100 focus:outline-none focus:ring-4 focus:ring-sky-400">
+                </div>
+                <button onclick="app.joinRoom()" class="btn-press w-full mt-2 py-4 bg-emerald-500 hover:bg-emerald-400 text-gray-900 font-black rounded-xl text-xl shadow-lg shadow-emerald-900">🚀 투표방 입장하기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. 교사용 컨트롤 패널 -->
+    <div id="teacher-controls" class="hidden fixed bottom-0 left-0 w-full bg-gray-900 border-t border-gray-700 z-[9000] flex-col">
+        <div id="ticker-bar" class="w-full border-t-4 border-red-600 shadow-[0_-5px_20px_rgba(0,0,0,0.5)] hidden relative bg-gray-900 h-12 overflow-hidden">
+            <div class="absolute left-0 top-0 bg-red-600 text-white font-black px-4 h-full flex items-center shadow-lg z-20 whitespace-nowrap">
+                <span class="animate-pulse mr-2">🔴</span> LIVE 시민 여론
+            </div>
+            <div class="absolute left-0 top-0 w-full h-full flex items-center z-10 pl-[180px]">
+                <marquee id="news-ticker" class="text-xl font-black text-white tracking-wide drop-shadow-md w-full" scrollamount="8">
+                    학생들이 투표와 함께 이유를 작성하면 실시간 여론이 이곳에 흘러갑니다...
+                </marquee>
+            </div>
+        </div>
+        
+        <div class="flex justify-between items-center px-6 py-4">
+            <div class="flex items-center gap-4">
+                <div class="text-xl font-black text-emerald-400 bg-gray-800 px-4 py-2 rounded-lg border border-gray-700 flex items-center gap-2 shadow-inner">
+                    <span class="animate-pulse">📡</span> <span id="display-room-badge">방송 준비 중</span>
+                </div>
+                <div class="text-gray-400 font-bold hidden md:block ml-2" id="slide-indicator">슬라이드 1 / 20</div>
+            </div>
+            <div class="flex gap-4">
+                <button onclick="app.prevSlide()" class="btn-press px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white font-bold rounded-xl shadow-lg">◀ 이전</button>
+                <button onclick="app.nextSlide()" class="btn-press px-8 py-3 bg-sky-600 hover:bg-sky-500 text-white font-black rounded-xl shadow-[0_0_15px_rgba(56,189,248,0.5)]">다음 ▶</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. PPT 화면 -->
+    <div id="ppt-screen" class="screen flex-col items-center justify-center w-full h-screen pb-24 relative overflow-hidden bg-[#1c1917]">
+        <div id="slide-content" class="w-full max-w-5xl p-8 flex flex-col items-center justify-center text-center transition-opacity duration-300"></div>
+    </div>
+
+    <!-- 4. 대시보드 화면 -->
+    <div id="dashboard-screen" class="screen flex-col items-center w-full h-screen pb-24 pt-8 px-4 overflow-y-auto bg-gray-900">
+        <div class="w-full max-w-5xl flex flex-col gap-6">
+            <div class="bg-gray-800 p-6 rounded-2xl neon-box flex flex-col relative w-full">
+                <h3 class="text-3xl font-black text-white mb-2 text-center">📊 <span id="current-phase-title" class="text-sky-400">투표 주제</span></h3>
+                <div class="w-full bg-gray-700 rounded-full h-8 mb-4 mt-4 relative overflow-hidden shadow-inner border border-gray-600">
+                    <div id="progress-bar" class="bg-sky-500 h-8 rounded-full transition-all duration-500" style="width: 0%"></div>
+                    <div class="absolute inset-0 flex justify-center items-center text-base font-bold text-white text-shadow">
+                        현재 투표율: <span id="progress-text" class="ml-2">0 / 0 명 (0%)</span>
+                    </div>
+                </div>
+                <div class="relative w-full h-72 flex-grow mt-4"><canvas id="voteChart"></canvas></div>
+            </div>
+            <div class="bg-gray-800 p-6 rounded-2xl neon-box mb-8 w-full">
+                <h3 class="text-xl font-bold text-sky-400 mb-4 border-b border-gray-700 pb-2">실시간 여론 기록소</h3>
+                <div class="overflow-x-auto h-56 overflow-y-auto">
+                    <table class="w-full text-left text-gray-300">
+                        <thead class="bg-gray-700 text-gray-400 sticky top-0">
+                            <tr><th class="px-4 py-3 rounded-tl-xl w-1/6">학번</th><th class="px-4 py-3 w-1/6">이름</th><th class="px-4 py-3 w-1/6 text-center">선택</th><th class="px-4 py-3 rounded-tr-xl w-1/2">투표 이유</th></tr>
+                        </thead>
+                        <tbody id="student-vote-list">
+                            <tr><td colspan="4" class="text-center py-6 text-gray-500 font-bold">아직 투표한 학생이 없습니다.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 5. 신문 화면 -->
+    <div id="newspaper-screen" class="screen flex-col items-center justify-start w-full h-screen pb-24 p-4 relative z-50 overflow-y-auto bg-gray-900">
+        <div class="newspaper-style w-full max-w-4xl p-8 md:p-12 rounded-sm shadow-2xl flex flex-col items-center text-center mt-4">
+            <div class="border-b-4 border-gray-800 w-full pb-4 mb-6 flex justify-between items-end">
+                <div class="text-lg font-bold">제 1946 호</div><h1 class="text-4xl md:text-6xl font-black serif tracking-tighter">解 放 日 報 (해방일보)</h1>
+                <div class="text-right"><div class="text-lg font-bold">1946년 모월 모일</div><div class="text-sm font-black text-gray-700 mt-1">🏫 아산고 특별발행</div></div>
+            </div>
+            <h2 id="news-headline" class="text-3xl md:text-5xl font-black mb-8 leading-tight px-4 text-red-900 underline decoration-4 underline-offset-8">(헤드라인)</h2>
+            <div class="border-t-4 border-double border-gray-800 w-full pt-6 mb-6"></div>
+            <div id="mvp-section" class="w-full bg-white/50 border-2 border-gray-800 p-6 mb-8 hidden flex-col items-center shadow-md">
+                <div class="bg-gray-800 text-white px-6 py-2 text-xl font-bold rounded-sm mb-4">🏆 오늘의 명 논설위원</div>
+                <div class="text-2xl font-black text-gray-900 leading-snug mb-2" id="mvp-reason">"이유"</div>
+                <div class="text-lg font-bold text-gray-700 text-right w-full">- <span id="mvp-name">이름</span> 논설위원 -</div>
+            </div>
+            <h3 class="text-2xl font-bold mb-4 border-b border-gray-400 pb-2 w-full text-left">🎤 거리의 시민 인터뷰</h3>
+            <div id="news-interviews" class="grid grid-cols-1 md:grid-cols-3 gap-6 w-full text-left"></div>
+        </div>
+    </div>
+
+    <!-- 6. 학생 화면 -->
+    <div id="student-screen" class="screen flex-col items-center justify-center w-full max-w-md h-full my-auto p-4 relative">
+        <button onclick="app.requestSync()" class="absolute top-4 left-4 bg-gray-800 text-gray-300 px-4 py-2 rounded-full text-sm font-bold border border-gray-600 shadow-md flex items-center gap-2 active:scale-95 transition-transform z-50">
+            <span>🔄</span> 선생님 화면 수동으로 당겨오기
+        </button>
+        <div class="bg-gray-800 w-full p-8 rounded-3xl neon-box text-center shadow-2xl mt-12">
+            <div class="inline-block px-4 py-1 bg-gray-700 rounded-full text-sm font-bold text-gray-300 mb-6">
+                학번: <span id="display-stu-id" class="text-emerald-400"></span> | 이름: <span id="display-stu-name" class="text-emerald-400"></span>
+            </div>
+            <h1 id="student-title" class="text-2xl font-black text-white mb-8 leading-tight transition-all duration-300">선생님의 설명을<br><span class="text-sky-400">집중해서 들어주세요...</span></h1>
+            
+            <div id="vote-section" class="flex flex-col gap-4 hidden">
+                <label class="text-left text-sky-300 font-bold text-sm mb-[-8px]">👇 선택한 이유를 꼭 적어주세요 (필수)</label>
+                <input type="text" id="vote-reason" placeholder="이유: 나는 ~라고 생각한다." class="w-full px-4 py-4 rounded-xl text-gray-900 font-bold text-lg bg-gray-100 focus:outline-none focus:ring-4 focus:ring-sky-400 shadow-inner">
+                <div class="border-b border-gray-600 my-2"></div>
+                <button id="btn-a" onclick="app.vote('A')" class="btn-press py-4 px-4 bg-blue-600 rounded-2xl font-black text-white shadow-[0_6px_0_#1e3a8a] leading-snug flex flex-col items-center justify-center">
+                    <span class="text-2xl mb-1">A 선택</span><span id="btn-a-desc" class="text-sm font-normal text-blue-200">설명</span>
+                </button>
+                <button id="btn-b" onclick="app.vote('B')" class="btn-press py-4 px-4 bg-red-600 rounded-2xl font-black text-white shadow-[0_6px_0_#7f1d1d] leading-snug flex flex-col items-center justify-center">
+                    <span class="text-2xl mb-1">B 선택</span><span id="btn-b-desc" class="text-sm font-normal text-red-200">설명</span>
+                </button>
+                <button id="btn-c" onclick="app.vote('C')" class="btn-press py-4 px-4 bg-emerald-600 rounded-2xl font-black text-white shadow-[0_6px_0_#064e3b] leading-snug flex flex-col items-center justify-center">
+                    <span class="text-2xl mb-1">C 선택</span><span id="btn-c-desc" class="text-sm font-normal text-emerald-200">설명</span>
+                </button>
+            </div>
+            
+            <div id="voted-overlay" class="hidden mt-8 p-6 bg-gray-900 rounded-2xl border-2 border-emerald-400 text-emerald-400 font-bold animate-bounce">
+                <div class="text-5xl mb-3">✅</div><div class="text-2xl">투표 전송 완료!</div><div class="text-sm text-gray-400 mt-2">앞을 보며 실시간 여론을 확인하세요.</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const app = {
+            topicPrefix: 'ASAN_FINAL_HTTP_', 
+            roomCode: '', role: '', 
+            myUid: 'user_' + Math.floor(Math.random() * 1000000),
+            studentId: '', studentName: '',
+            chart: null, currentPhase: '대기 중',
+            currentPhaseVotes: { A: 0, B: 0, C: 0 },
+            votedUsers: new Set(), joinedUsers: new Set(), allReasons: [], 
+            
+            // HTTP 폴링(가져오기) 엔진 변수
+            lastPollId: '', pollInterval: null,
+
+            showToast: (msg) => {
+                const toast = document.getElementById('toast');
+                toast.innerText = msg; toast.classList.add('show');
+                setTimeout(() => toast.classList.remove('show'), 3000);
+            },
+
+            showScreen: (id) => {
+                document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+                document.getElementById(id).classList.add('active');
+            },
+
+            triggerAlert: () => {
+                const body = document.getElementById('main-body');
+                const overlay = document.getElementById('alert-overlay');
+                overlay.classList.remove('hidden'); overlay.classList.add('flex');
+                body.classList.add('shake-screen');
+                setTimeout(() => { overlay.classList.add('hidden'); overlay.classList.remove('flex'); body.classList.remove('shake-screen'); }, 400);
+            },
+
+            // 1. 차단 없는 초경량 단방향 통신 (SSE 방식)으로 전면 교체
+            connect: () => {
+                app.showToast("실시간 통신망 연결 중...");
+                const topic = app.topicPrefix + app.roomCode;
+                const eventSource = new EventSource(`https://ntfy.sh/${topic}/sse`);
+                
+                eventSource.onmessage = (event) => {
+                    try {
+                        const data = JSON.parse(event.data);
+                        // 서버에서 메시지가 왔을 때만 반응 (2초마다 찌르지 않음)
+                        if (data.event === 'message') {
+                            const msg = JSON.parse(data.message);
+                            app.handleMessage(msg);
+                        }
+                    } catch (e) {}
+                };
+                
+                eventSource.onopen = () => app.showToast("통신 100% 뚫림! (SSE 모드)");
+                eventSource.onerror = () => console.log("재연결 시도 중...");
+            },
+
+            // 2. 데이터 발송 (HTTP POST)
+            send: (payload) => {
+                const topic = app.topicPrefix + app.roomCode;
+                fetch(`https://ntfy.sh/${topic}`, {
+                    method: 'POST',
+                    body: JSON.stringify(payload)
+                }).catch(e => console.log("전송 오류 (무시가능):", e));
+            },
+
+            // (poll 함수는 찌르기 방식이므로 삭제/대체됨)
+
+            requestSync: () => { 
+                app.showToast("화면 당겨오는 중..."); 
+                app.send({ type: 'SYNC_REQUEST', uid: app.myUid }); 
+            },
+
+            handleMessage: (msg) => {
+                if (app.role === 'teacher') {
+                    if (msg.type === 'JOIN') {
+                        app.joinedUsers.add(msg.uid);
+                        app.updateProgressBar();
+                    } else if (msg.type === 'VOTE' && msg.phase === app.currentPhase) {
+                        app.joinedUsers.add(msg.uid); 
+                        if (!app.votedUsers.has(msg.uid)) {
+                            app.votedUsers.add(msg.uid);
+                            app.currentPhaseVotes[msg.choice]++;
+                            app.allReasons.push(msg); 
+                            app.updateChart();
+                            app.updateProgressBar();
+                            app.addStudentVoteToTable(msg);
+                        }
+                    } else if (msg.type === 'SYNC_REQUEST') {
+                        app.send({ type: 'SYNC_STATE', title: app.currentPhase, targetUid: msg.uid });
+                    }
+                } 
+                else if (app.role === 'student') {
+                    if (msg.type === 'PHASE_UPDATE' || msg.type === 'SYNC_STATE') {
+                        if (msg.type === 'SYNC_STATE' && msg.targetUid !== app.myUid) return;
+                        
+                        app.send({ type: 'JOIN', uid: app.myUid }); 
+                        app.currentPhase = msg.title;
+                        const titleEl = document.getElementById('student-title');
+                        const sectionEl = document.getElementById('vote-section');
+                        const overlayEl = document.getElementById('voted-overlay');
+                        const btnC = document.getElementById('btn-c');
+
+                        if (msg.title === '대기 중') {
+                            titleEl.innerHTML = `선생님의 설명을<br><span class="text-sky-400">집중해서 들어주세요...</span>`;
+                            sectionEl.classList.add('hidden'); overlayEl.classList.add('hidden');
+                        } else {
+                            titleEl.innerHTML = `<span class="text-sky-400 font-bold text-lg">실시간 투표</span><br>${msg.title}`;
+                            sectionEl.classList.remove('hidden'); overlayEl.classList.add('hidden');
+                            document.getElementById('vote-reason').value = '';
+                            
+                            if (msg.title.includes('Phase 1')) {
+                                document.getElementById('btn-a-desc').innerText = '모든 단체 허용 (미국)';
+                                document.getElementById('btn-b-desc').innerText = '찬성 세력만 (소련)';
+                                btnC.classList.add('hidden');
+                            } else if (msg.title.includes('Phase 2')) {
+                                document.getElementById('btn-a-desc').innerText = '유상매입 유상분배 (우익)';
+                                document.getElementById('btn-b-desc').innerText = '무상몰수 무상분배 (좌익)';
+                                document.getElementById('btn-c-desc').innerText = '유상매입 무상분배 (중도)';
+                                btnC.classList.remove('hidden');
+                            } else if (msg.title.includes('Phase 3')) {
+                                document.getElementById('btn-a-desc').innerText = '남한 단독 선거 수용';
+                                document.getElementById('btn-b-desc').innerText = '단독 선거 반대 (남북협상)';
+                                btnC.classList.add('hidden');
+                            }
+                        }
+                    }
+                }
+            },
+
+            createRoom: () => {
+                app.role = 'teacher';
+                app.roomCode = Math.floor(1000 + Math.random() * 9000).toString();
+                document.getElementById('display-room-badge').innerText = `방코드: ${app.roomCode}`;
+                app.showScreen('ppt-screen');
+                document.getElementById('teacher-controls').classList.remove('hidden');
+                document.getElementById('teacher-controls').classList.add('flex');
+                app.initChart(); app.connect(); app.renderSlide();
+                app.showToast(`방 코드 [${app.roomCode}] 생성 완료! 학생들에게 안내해주세요.`);
+            },
+
+            joinRoom: () => {
+                const rCode = document.getElementById('input-room-code').value.trim();
+                const sId = document.getElementById('student-id').value.trim();
+                const sName = document.getElementById('student-name').value.trim();
+                if (!rCode || !sId || !sName) return app.showToast("정보를 모두 입력해주세요!");
+
+                app.roomCode = rCode; app.studentId = sId; app.studentName = sName; app.role = 'student';
+                document.getElementById('display-stu-id').innerText = sId;
+                document.getElementById('display-stu-name').innerText = sName;
+                app.showScreen('student-screen');
+                app.connect(); app.send({ type: 'JOIN', uid: app.myUid });
+            },
+
+            currentSlideIndex: 0,
+            
+            flow: [
+                { type: 'ppt', content: `<h2 class="serif accent text-3xl font-bold text-amber-500 mb-4">🏫 아산고등학교 역사 수업</h2><h1 class="text-5xl md:text-7xl font-black text-white mb-6 leading-tight">응답하라 <span class="text-sky-400">1946</span></h1><p class="text-2xl text-gray-300">통일 정부 수립 운동과 해방 정국의 갈림길</p>` },
+                { type: 'ppt', content: `<h2 class="serif text-2xl font-bold text-sky-400 mb-2">프롤로그: 1945년 8월 15일</h2><h1 class="text-4xl font-black text-white mb-6">감격의 광복, 빛을 되찾다</h1><p class="text-xl text-gray-300 leading-relaxed max-w-4xl text-left">• 연합국의 승리와 일본의 무조건 항복으로 35년간의 일제 강점기가 끝남.<br>• 전국 방방곡곡에서 태극기를 흔들며 대한독립만세를 외치는 감격의 순간.</p>` },
+                { type: 'ppt', content: `<h2 class="serif text-2xl font-bold text-sky-400 mb-2">스스로 나라를 세우기 위한 노력</h2><h1 class="text-4xl font-black text-white mb-6">조선건국준비위원회(건준) 결성</h1><p class="text-xl text-gray-300 leading-relaxed max-w-4xl text-left">• 해방 당일, 여운형을 위원장으로 하여 <b>건국준비위원회</b> 조직.<br>• 전국에 145개의 지부를 설치하고 치안과 행정을 스스로 담당하며 새 국가 수립을 준비함.</p>` },
+                { type: 'ppt', content: `<h2 class="serif text-2xl font-bold text-sky-400 mb-2">해방군인가, 점령군인가</h2><h1 class="text-4xl font-black text-white mb-6">미군과 소련군의 38도선 분할 진주</h1><p class="text-xl text-gray-300 leading-relaxed max-w-4xl text-left">• 일본군 무장 해제를 명분으로 한반도 허리에 38도선이 그어짐.<br>• <b>이북:</b> 소련군이 진주하여 간접 통치 실시.<br>• <b>이남:</b> 미군이 진주하여 직접 <b>군정</b> 실시, 기존의 친일파 관료와 경찰을 그대로 등용하여 백성들의 불만이 커짐.</p>` },
+                { type: 'ppt', content: `<h2 class="serif text-2xl font-bold text-sky-400 mb-2">한반도의 운명이 결정되다 (1945.12)</h2><h1 class="text-4xl font-black text-white mb-6">모스크바 3국 외상 회의</h1><div class="bg-gray-800 p-6 rounded-2xl max-w-4xl text-left text-xl text-gray-200 space-y-3"><p>미·영·소 3국 외무장관이 모여 한반도 문제를 논의한 핵심 결과 3가지:</p><p>1. 민주주의 <b>임시 정부 수립</b></p><p>2. 이를 돕기 위한 <b>미소 공동 위원회 설치</b></p><p>3. 미·영·소·중 4개국에 의한 <span class="text-red-400 font-bold">최고 5년간의 신탁 통치 실시</span></p></div>` },
+                { type: 'ppt', content: `<h2 class="serif text-2xl font-bold text-sky-400 mb-2">분열의 시작</h2><h1 class="text-4xl font-black text-white mb-6">찬탁과 반탁의 극심한 대립</h1><p class="text-xl text-gray-300 leading-relaxed max-w-4xl text-left">• <b>우익 (반탁):</b> "신탁통치는 제2의 식민 지배다! 당장 독립하라!"며 강력한 반대 운동 전개.<br>• <b>좌익 (찬탁):</b> "핵심은 임시정부 수립이다. 신탁은 후견일 뿐이다"라며 모스크바 결정 총체적 지지.<br>• 해방의 기쁨이 채 가시기도 전에 민족이 둘로 쪼개져 싸우기 시작함.</p>` },
+                { type: 'ppt', content: `<h2 class="serif text-2xl font-bold text-sky-400 mb-2">정부 수립을 위한 첫 만남 (1946.3)</h2><h1 class="text-4xl font-black text-white mb-6">제1차 미소공동위원회 개최</h1><p class="text-xl text-gray-300 leading-relaxed max-w-4xl text-left">• 덕수궁 석조전에서 한반도 임시정부 수립을 위한 미소공동위원회가 열림.<br>• 하지만 <b>'어떤 단체를 임시정부 수립 논의에 참여시킬 것인가'</b>를 두고 미국과 소련이 정면 충돌함.</p>` },
+                { type: 'vote', phase: 'Phase 1: 제1차 미소공동위원회', title: '어떤 단체를 임시정부 논의에 참여시키겠습니까?' },
+                { type: 'ppt', content: `<h2 class="serif text-2xl font-bold text-sky-400 mb-2">결렬, 그리고 혼란</h2><h1 class="text-4xl font-black text-white mb-6">제1차 미소공위 무기한 휴회</h1><p class="text-xl text-gray-300 leading-relaxed max-w-4xl text-left">• 양국의 팽팽한 입장 차이로 회의는 결국 결렬됨.<br>• 통일된 임시정부가 세워질 것이라는 국민들의 기대는 물거품이 되고, 정국은 극도의 혼란에 빠짐.</p>` },
+                { type: 'ppt', content: `<h2 class="serif text-2xl font-bold text-sky-400 mb-2">충격적인 발언 (1946.6)</h2><h1 class="text-4xl font-black text-white mb-6">이승만의 정읍 발언</h1><p class="text-xl text-gray-300 leading-relaxed max-w-4xl text-left"><i>"무기 휴회된 공위가 재개될 기색도 보이지 않으며... 통일 정부를 고대하나 여의케 되지 않으니 <b>우리 남방만이라도 임시정부 혹은 위원회 같은 것을 조직하여...</b>"</i><br><br>• 남한만의 단독 정부 수립을 최초로 공개 주장함. 분단이 현실화될 위기가 고조됨.</p>` },
+                { type: 'ppt', content: `<h2 class="serif text-2xl font-bold text-sky-400 mb-2">분단을 막아라 (1946.7)</h2><h1 class="text-4xl font-black text-white mb-6">좌우 합작 운동의 전개</h1><p class="text-xl text-gray-300 leading-relaxed max-w-4xl text-left">• 정읍 발언 이후 분단을 우려한 중도파(여운형, 김규식 등)가 나섬.<br>• <b>"좌익과 우익이 극단적 대립을 멈추고 합심하여 통일 임시정부를 세우자!"</b><br>• 미군정도 초기에는 이 운동을 적극 지원함.</p>` },
+                { type: 'ppt', content: `<h2 class="serif text-2xl font-bold text-sky-400 mb-2">최대의 난제: 토지 문제</h2><h1 class="text-4xl font-black text-white mb-6">어떻게 땅을 나누어 줄 것인가?</h1><p class="text-xl text-gray-300 leading-relaxed max-w-4xl text-left">당시 국민 절대다수는 농민. 새 국가의 가장 중요한 과제는 식민지 지주제 철폐와 '토지 개혁'이었습니다.<br><br>• <b>우익:</b> 지주에게 돈을 주고 사서 농민에게 돈을 받고 팔자 (유상매입 유상분배)<br>• <b>좌익:</b> 지주의 땅을 빼앗아 농민에게 거저 주자 (무상몰수 무상분배)<br>• <b>중도:</b> 국가가 땅을 사서 농민에게 거저 주자 (유상매입 무상분배)</p>` },
+                { type: 'vote', phase: 'Phase 2: 좌우합작운동 (토지문제)', title: '가장 합리적인 토지 개혁 방안은 무엇이라 생각하십니까?' },
+                { type: 'ppt', content: `<h2 class="serif text-2xl font-bold text-sky-400 mb-2">비극적인 결말 (1947.7)</h2><h1 class="text-4xl font-black text-white mb-6">여운형 암살과 운동의 좌절</h1><p class="text-xl text-gray-300 leading-relaxed max-w-4xl text-left">• '좌우합작 7원칙'을 합의하며 노력했으나, 극좌와 극우 양측으로부터 모두 배척받음.<br>• 결국 중심 인물이었던 <b>여운형이 극우 청년에게 암살</b>당하면서, 통일을 향한 좌우 합작 운동은 완전히 실패로 돌아감.</p>` },
+                { type: 'ppt', content: `<h2 class="serif text-2xl font-bold text-sky-400 mb-2">미국의 포기 (1947.9)</h2><h1 class="text-4xl font-black text-white mb-6">제2차 미소공위 결렬과 유엔(UN) 상정</h1><p class="text-xl text-gray-300 leading-relaxed max-w-4xl text-left">• 제2차 미소공동위원회가 다시 열렸으나 냉전의 심화로 또 결렬됨.<br>• 미국은 "더 이상 소련과 대화로 풀 수 없다"며 한반도 문제를 <b>유엔(UN)</b>으로 넘겨버림.</p>` },
+                { type: 'ppt', content: `<h2 class="serif text-2xl font-bold text-sky-400 mb-2">유엔 총회의 결정 (1947.11)</h2><h1 class="text-4xl font-black text-white mb-6">"인구 비례에 의한 남북 총선거 실시"</h1><p class="text-xl text-gray-300 leading-relaxed max-w-4xl text-left">• 유엔 총회는 유엔 한국 임시 위원단의 감시 아래 남북한 총선거를 하라고 결의함.<br>• <b>그러나:</b> 인구가 적어 불리해진 북한(소련)이 위원단의 북한 입국을 전면 거부함.</p>` },
+                { type: 'ppt', content: `<h2 class="serif text-2xl font-bold text-sky-400 mb-2">운명의 유엔 소총회 (1948.2)</h2><h1 class="text-4xl font-black text-white mb-6">"선거 가능한 지역에서만의 단독 선거"</h1><p class="text-xl text-gray-300 leading-relaxed max-w-4xl text-left">• 유엔 소총회는 결국 <span class="text-yellow-300 font-bold">"접근 가능한 지역(남한)만이라도 단독 선거를 치르자"</span>고 결의함.<br>• 이는 곧 남한과 북한에 각각 다른 정부가 세워져, 한반도가 영구히 분단됨을 의미함.</p>` },
+                { type: 'ppt', content: `<h2 class="serif text-2xl font-bold text-sky-400 mb-2">마지막 몸부림 (1948.4)</h2><h1 class="text-4xl font-black text-white mb-6">김구의 남북 협상 시도</h1><p class="text-xl text-gray-300 leading-relaxed max-w-4xl text-left"><i>"나는 통일된 조국을 건설하려다 38도선을 베고 쓰러질지언정 일신에 구차한 안일을 취하여 단독정부를 세우는 데는 협력하지 않겠다."</i><br><br>• 백범 김구와 김규식은 단독 선거를 막기 위해 북한의 평양으로 넘어가 남북 지도자 회의를 열었으나, 이미 짜여진 분단의 흐름을 막지 못함.</p>` },
+                { type: 'vote', phase: 'Phase 3: 단독정부 vs 남북협상', title: '역사의 갈림길, 당신의 최종 선택은?' },
+                { type: 'newspaper' }
+            ],
+
+            nextSlide: () => { if (app.currentSlideIndex < app.flow.length - 1) { app.currentSlideIndex++; app.renderSlide(); } },
+            prevSlide: () => { if (app.currentSlideIndex > 0) { app.currentSlideIndex--; app.renderSlide(); } },
+            
+            renderSlide: () => {
+                const slide = app.flow[app.currentSlideIndex];
+                document.getElementById('slide-indicator').innerText = `슬라이드 ${app.currentSlideIndex + 1} / ${app.flow.length}`;
+                const ticker = document.getElementById('ticker-bar');
+                
+                if (slide.type === 'ppt') {
+                    app.showScreen('ppt-screen');
+                    document.getElementById('slide-content').innerHTML = slide.content;
+                    ticker.classList.add('hidden');
+                    app.currentPhase = '대기 중';
+                    app.send({ type: 'PHASE_UPDATE', title: '대기 중' });
+                } 
+                else if (slide.type === 'vote') {
+                    app.showScreen('dashboard-screen');
+                    ticker.classList.remove('hidden');
+                    app.sendPhase(slide.phase, slide.title);
+                }
+                else if (slide.type === 'newspaper') { app.publishNewspaper(); ticker.classList.add('hidden'); }
+            },
+
+            sendPhase: (phase, displayTitle) => {
+                app.triggerAlert();
+                app.currentPhase = phase;
+                document.getElementById('current-phase-title').innerText = displayTitle;
+                app.currentPhaseVotes = { A: 0, B: 0, C: 0 };
+                app.votedUsers.clear();
+                app.updateChart(); app.updateProgressBar();
+                document.getElementById('student-vote-list').innerHTML = `<tr><td colspan="4" class="text-center py-6 text-gray-500 font-bold">아직 투표한 학생이 없습니다.</td></tr>`;
+                document.getElementById('news-ticker').innerHTML = '학생들이 투표와 함께 이유를 작성하면 실시간 여론이 이곳에 흘러갑니다...';
+                app.send({ type: 'PHASE_UPDATE', title: phase });
+            },
+
+            initChart: () => {
+                const ctx = document.getElementById('voteChart').getContext('2d');
+                Chart.defaults.color = '#9ca3af';
+                app.chart = new Chart(ctx, {
+                    type: 'bar',
+                    data: { labels: ['A 선택', 'B 선택', 'C 선택'], datasets: [{ data: [0, 0, 0], backgroundColor: ['#2563eb', '#dc2626', '#059669'], borderRadius: 8 }] },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1, font: { size: 14 } } }, x: { ticks: { font: { size: 16, weight: 'bold', color: '#fff' } } } } }
+                });
+            },
+
+            updateChart: () => { if (app.chart) { app.chart.data.datasets[0].data = [app.currentPhaseVotes.A, app.currentPhaseVotes.B, app.currentPhaseVotes.C]; app.chart.update(); } },
+
+            updateProgressBar: () => {
+                const total = app.joinedUsers.size; const voted = app.votedUsers.size;
+                let percent = 0; if(total > 0) percent = Math.round((voted / total) * 100);
+                document.getElementById('progress-bar').style.width = percent + '%';
+                document.getElementById('progress-text').innerText = `${voted} / ${total} 명 (${percent}%)`;
+            },
+
+            addStudentVoteToTable: (msg) => {
+                const list = document.getElementById('student-vote-list');
+                if (list.innerHTML.includes('아직 투표한 학생이 없습니다')) list.innerHTML = '';
+                const choiceColor = msg.choice === 'A' ? 'text-blue-400' : (msg.choice === 'B' ? 'text-red-400' : 'text-emerald-400');
+                list.insertAdjacentHTML('afterbegin', `<tr class="border-b border-gray-700 hover:bg-gray-700/50 transition-colors"><td class="px-4 py-3 font-bold text-gray-300">${msg.studentId}</td><td class="px-4 py-3 text-gray-300 text-base">${msg.studentName}</td><td class="px-4 py-3 font-black text-center text-xl ${choiceColor}">${msg.choice}</td><td class="px-4 py-3 text-white font-bold break-keep">${msg.reason}</td></tr>`); 
+                const ticker = document.getElementById('news-ticker');
+                if (ticker.innerHTML.includes('실시간 여론이 이곳에')) ticker.innerHTML = '';
+                ticker.insertAdjacentHTML('beforeend', `<span class="mx-8 text-gray-600">||</span><span class="text-amber-400">[${msg.studentName}]</span> "${msg.reason}"`);
+            },
+
+            publishNewspaper: () => {
+                const headlineEl = document.getElementById('news-headline');
+                const interviewsEl = document.getElementById('news-interviews');
+                const mvpSection = document.getElementById('mvp-section');
+                
+                if (app.currentPhaseVotes.A > app.currentPhaseVotes.B) headlineEl.innerHTML = "단독 선거 강행!<br>국민 다수, 남한 총선거 수용 지지";
+                else if (app.currentPhaseVotes.B > app.currentPhaseVotes.A) headlineEl.innerHTML = "통일을 향한 열망!<br>단독 선거 반대, 남북협상 청신호";
+                else headlineEl.innerHTML = "혼란의 해방정국!<br>국민 여론 팽팽하게 맞서다";
+
+                if (app.allReasons.length > 0) {
+                    const sortedReasons = [...app.allReasons].sort((a, b) => b.reason.length - a.reason.length);
+                    const mvp = sortedReasons[0]; 
+                    document.getElementById('mvp-reason').innerText = `"${mvp.reason}"`; document.getElementById('mvp-name').innerText = mvp.studentName;
+                    mvpSection.classList.remove('hidden'); mvpSection.classList.add('flex');
+                    
+                    const others = sortedReasons.slice(1); interviewsEl.innerHTML = '';
+                    const shuffledOthers = others.sort(() => 0.5 - Math.random()).slice(0, 3);
+                    if(shuffledOthers.length === 0) interviewsEl.innerHTML = `<div class="col-span-3 text-center text-gray-500 font-bold">다른 의견이 없습니다.</div>`;
+                    else shuffledOthers.forEach(msg => { interviewsEl.innerHTML += `<div class="border-2 border-gray-500 p-4 bg-white/70 shadow-sm flex flex-col gap-2"><div class="text-sm font-bold text-gray-700 border-b border-gray-400 pb-1">[${msg.studentName} 학생] - ${msg.choice}안 지지</div><div class="text-lg font-bold leading-relaxed text-gray-900 mt-1">"${msg.reason}"</div></div>`; });
+                } else {
+                    mvpSection.classList.add('hidden'); interviewsEl.innerHTML = `<div class="col-span-3 text-center text-gray-500 font-bold">수집된 시민 의견이 없습니다.</div>`;
+                }
+                app.showScreen('newspaper-screen'); app.send({ type: 'PHASE_UPDATE', title: '대기 중' });
+            },
+
+            vote: (choice) => {
+                const reason = document.getElementById('vote-reason').value.trim();
+                if (!reason) { app.showToast("선택한 이유를 꼭 적어주세요!"); document.getElementById('vote-reason').focus(); return; }
+                app.send({ type: 'VOTE', choice: choice, phase: app.currentPhase, uid: app.myUid, studentId: app.studentId, studentName: app.studentName, reason: reason });
+                document.getElementById('vote-section').classList.add('hidden'); document.getElementById('voted-overlay').classList.remove('hidden');
+                app.showToast("투표 전송 성공!");
+            }
+        };
+
+        // 🔥 Tiiny Host 광고 배너 0.1초마다 추적해서 강제 삭제 스크립트 🔥
+        setInterval(() => {
+            const ads = document.querySelectorAll('a[href*="tiiny"], div[style*="position: fixed"]');
+            ads.forEach(ad => {
+                if(ad.innerText.includes('tiiny') || ad.href?.includes('tiiny')) {
+                    ad.style.display = 'none';
+                }
+            });
+        }, 100);
+    </script>
+</body>
+</html>
